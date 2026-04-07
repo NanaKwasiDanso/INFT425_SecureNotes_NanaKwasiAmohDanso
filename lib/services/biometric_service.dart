@@ -19,6 +19,11 @@ class BiometricService {
     }
   }
 
+  /// Legacy helper for older code paths.
+  Future<bool> canCheckBiometrics() async {
+    return await isBiometricAvailable();
+  }
+
   /// Get available biometric types
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
