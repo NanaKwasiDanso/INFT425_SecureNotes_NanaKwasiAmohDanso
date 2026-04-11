@@ -9,19 +9,12 @@ class BiometricService {
     try {
       final bool canAuthenticateWithBiometrics =
           await _localAuth.canCheckBiometrics;
-      final bool canAuthenticate =
-          canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
-
-      return canAuthenticate;
+      final bool deviceSupported = await _localAuth.isDeviceSupported();
+      return canAuthenticateWithBiometrics || deviceSupported;
     } catch (e) {
       debugPrint('Error checking biometric availability: $e');
       return false;
     }
-  }
-
-  /// Legacy helper for older code paths.
-  Future<bool> canCheckBiometrics() async {
-    return await isBiometricAvailable();
   }
 
   /// Get available biometric types
@@ -36,17 +29,21 @@ class BiometricService {
     }
   }
 
-  /// Authenticate user with biometrics
+  /// Authenticate user with biometrics or device credentials
   Future<bool> authenticate({
     String reason = 'Please authenticate to access your secure notes',
     bool biometricOnly = false,
   }) async {
     try {
+      if (!await isBiometricAvailable()) {
+        return false;
+      }
+
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
         options: AuthenticationOptions(
           biometricOnly: biometricOnly,
-          stickyAuth: true,
+          stickyAuth: false,
           useErrorDialogs: true,
         ),
       );
@@ -56,6 +53,13 @@ class BiometricService {
       debugPrint('Error during biometric authentication: $e');
       return false;
     }
+  }
+
+  /// Authenticate using any supported sensor on the device
+  Future<bool> authenticateWithAnyBiometric({
+    String reason = 'Please authenticate using your device biometric sensor',
+  }) async {
+    return await authenticate(reason: reason, biometricOnly: false);
   }
 
   /// Authenticate with biometrics only (no fallback to PIN/pattern)
