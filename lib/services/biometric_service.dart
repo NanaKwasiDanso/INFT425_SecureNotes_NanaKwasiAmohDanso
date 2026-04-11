@@ -4,91 +4,97 @@ import 'package:local_auth/local_auth.dart';
 class BiometricService {
   final LocalAuthentication _localAuth = LocalAuthentication();
 
-  /// Check if biometric authentication is available on the device
+  bool _isSupportedBiometricType(BiometricType type) {
+    return type == BiometricType.fingerprint ||
+        type == BiometricType.face ||
+        type == BiometricType.iris ||
+        type == BiometricType.strong ||
+        type == BiometricType.weak;
+  }
+
+  /// Check whether any biometric mechanism is available on the device.
   Future<bool> isBiometricAvailable() async {
     try {
-      final bool canAuthenticateWithBiometrics =
-          await _localAuth.canCheckBiometrics;
-      final bool canAuthenticate =
-          canAuthenticateWithBiometrics || await _localAuth.isDeviceSupported();
-
-      return canAuthenticate;
+      final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
+      final bool deviceSupported = await _localAuth.isDeviceSupported();
+      return canCheckBiometrics || deviceSupported;
     } catch (e) {
-      debugPrint('Error checking biometric availability: $e');
+      debugPrint('Biometric availability error: $e');
       return false;
     }
   }
 
-  /// Legacy helper for older code paths.
-  Future<bool> canCheckBiometrics() async {
-    return await isBiometricAvailable();
-  }
-
-  /// Get available biometric types
-  Future<List<BiometricType>> getAvailableBiometrics() async {
+  /// Check whether a fingerprint or other biometric is supported.
+  Future<bool> isFingerprintSupported() async {
     try {
       final List<BiometricType> availableBiometrics = await _localAuth
           .getAvailableBiometrics();
-      return availableBiometrics;
+      return availableBiometrics.any(_isSupportedBiometricType);
+    } catch (e) {
+      debugPrint('Error checking fingerprint availability: $e');
+      return false;
+    }
+  }
+
+  /// Get available biometric types.
+  Future<List<BiometricType>> getAvailableBiometrics() async {
+    try {
+      return await _localAuth.getAvailableBiometrics();
     } catch (e) {
       debugPrint('Error getting available biometrics: $e');
       return [];
     }
   }
 
-  /// Authenticate user with biometrics
-  Future<bool> authenticate({
-    String reason = 'Please authenticate to access your secure notes',
-    bool biometricOnly = false,
+  /// Check whether any biometric identity is enrolled on the device.
+  Future<bool> hasEnrolledFingerprint() async {
+    try {
+      final availableBiometrics = await getAvailableBiometrics();
+      return availableBiometrics.any(_isSupportedBiometricType);
+    } catch (e) {
+      debugPrint('Error checking enrolled fingerprint: $e');
+      return false;
+    }
+  }
+
+  /// Authenticate user with the available biometric mechanism.
+  Future<bool> authenticateWithFingerprint({
+    String reason = 'Please authenticate using your fingerprint',
   }) async {
     try {
+      if (!await isBiometricAvailable()) {
+        return false;
+      }
+
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
-        options: AuthenticationOptions(
-          biometricOnly: biometricOnly,
-          stickyAuth: true,
+        options: const AuthenticationOptions(
+          biometricOnly: true,
+          stickyAuth: false,
           useErrorDialogs: true,
         ),
       );
 
       return didAuthenticate;
     } catch (e) {
-      debugPrint('Error during biometric authentication: $e');
+      debugPrint('Error during fingerprint authentication: $e');
       return false;
     }
   }
 
-  /// Authenticate with biometrics only (no fallback to PIN/pattern)
-  Future<bool> authenticateBiometricOnly({
-    String reason = 'Please authenticate using biometrics',
-  }) async {
-    return await authenticate(reason: reason, biometricOnly: true);
-  }
-
-  /// Check if device supports biometric authentication
-  Future<bool> isDeviceSupported() async {
-    try {
-      return await _localAuth.isDeviceSupported();
-    } catch (e) {
-      debugPrint('Error checking device support: $e');
-      return false;
-    }
-  }
-
-  /// Get biometric type descriptions for UI display
+  /// Get descriptions for the available biometric types.
   List<String> getBiometricTypeDescriptions(List<BiometricType> types) {
-    return types.map((type) {
+    return types.where(_isSupportedBiometricType).map((type) {
       switch (type) {
-        case BiometricType.face:
-          return 'Face recognition';
         case BiometricType.fingerprint:
           return 'Fingerprint';
+        case BiometricType.face:
+          return 'Face';
         case BiometricType.iris:
-          return 'Iris scan';
+          return 'Iris';
         case BiometricType.strong:
-          return 'Strong biometric';
         case BiometricType.weak:
-          return 'Weak biometric';
+          return 'Biometric';
       }
     }).toList();
   }

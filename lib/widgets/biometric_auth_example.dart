@@ -12,7 +12,6 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
   final BiometricService _biometricService = BiometricService();
   bool _isAuthenticated = false;
   bool _isBiometricAvailable = false;
-  List<String> _availableBiometrics = [];
 
   @override
   void initState() {
@@ -22,19 +21,15 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
 
   Future<void> _checkBiometricAvailability() async {
     final isAvailable = await _biometricService.isBiometricAvailable();
-    final biometrics = await _biometricService.getAvailableBiometrics();
-    final descriptions = _biometricService.getBiometricTypeDescriptions(
-      biometrics,
-    );
+    if (!mounted) return;
 
     setState(() {
       _isBiometricAvailable = isAvailable;
-      _availableBiometrics = descriptions;
     });
   }
 
   Future<void> _authenticate() async {
-    final authenticated = await _biometricService.authenticate(
+    final authenticated = await _biometricService.authenticateWithFingerprint(
       reason: 'Authenticate to access your secure notes',
     );
 
@@ -75,11 +70,11 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
             ),
             const SizedBox(height: 40),
             if (_isBiometricAvailable) ...[
-              Text('Available biometrics: ${_availableBiometrics.join(', ')}'),
+              const Text('Biometric authentication is available.'),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _authenticate,
-                child: const Text('Authenticate'),
+                child: const Text('Authenticate with Biometrics'),
               ),
             ] else ...[
               const Text('Biometric authentication not available'),
@@ -98,11 +93,11 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
 //
 // final biometricService = BiometricService();
 //
-// // Check if biometrics are available
+// // Check if biometric support is available
 // bool available = await biometricService.isBiometricAvailable();
 //
-// // Authenticate user
-// bool authenticated = await biometricService.authenticate(
+// // Authenticate user with biometrics
+// bool authenticated = await biometricService.authenticateWithFingerprint(
 //   reason: 'Please authenticate to continue',
 // );
 //

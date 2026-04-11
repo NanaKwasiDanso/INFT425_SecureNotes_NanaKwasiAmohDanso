@@ -93,6 +93,7 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Note' : 'Add Note'),
+        backgroundColor: const Color(0xFF6A1B9A),
         actions: [
           if (_isLoading)
             const Padding(
@@ -111,61 +112,93 @@ class _AddEditNoteScreenState extends State<AddEditNoteScreen> {
             ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Title Text Field
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Title',
-                hintText: 'Enter note title...',
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 1,
-              textCapitalization: TextCapitalization.sentences,
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 16),
-
-            // Content Text Field
-            Expanded(
-              child: TextField(
-                controller: _contentController,
-                decoration: const InputDecoration(
-                  labelText: 'Content',
-                  hintText: 'Enter note content...',
-                  border: OutlineInputBorder(),
-                  alignLabelWithHint: true,
-                ),
-                maxLines: null, // Allows unlimited lines
-                expands: true, // Takes all available space
-                textCapitalization: TextCapitalization.sentences,
-                enabled: !_isLoading,
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // Action Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF8E24AA), Color(0xFFFF7043)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
               children: [
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+                Container(
+                  padding: const EdgeInsets.all(18),
+                  decoration: BoxDecoration(
+                    color: const Color.fromRGBO(255, 255, 255, 0.14),
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(color: Colors.white24),
+                  ),
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: const InputDecoration(
+                      labelText: 'Title',
+                      hintText: 'Enter note title...',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 1,
+                    textCapitalization: TextCapitalization.sentences,
+                    enabled: !_isLoading,
+                  ),
                 ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _isLoading ? null : _saveNote,
-                  child: Text(isEditing ? 'Update' : 'Save'),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: const Color.fromRGBO(255, 255, 255, 0.14),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: TextField(
+                      controller: _contentController,
+                      decoration: const InputDecoration(
+                        labelText: 'Content',
+                        hintText: 'Enter note content...',
+                        border: InputBorder.none,
+                        alignLabelWithHint: true,
+                      ),
+                      maxLines: null,
+                      expands: true,
+                      textCapitalization: TextCapitalization.sentences,
+                      enabled: !_isLoading,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _saveNote,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: Colors.black87,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 14,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Text(isEditing ? 'Update' : 'Save'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
