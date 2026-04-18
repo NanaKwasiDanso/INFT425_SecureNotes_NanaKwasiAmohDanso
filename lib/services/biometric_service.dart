@@ -12,31 +12,30 @@ class BiometricService {
         type == BiometricType.weak;
   }
 
-  /// Check whether any biometric mechanism is available on the device.
-  Future<bool> isBiometricAvailable() async {
+  Future<bool> canCheckBiometrics() async {
     try {
-      final bool canCheckBiometrics = await _localAuth.canCheckBiometrics;
-      final bool deviceSupported = await _localAuth.isDeviceSupported();
-      return canCheckBiometrics || deviceSupported;
+      return await _localAuth.canCheckBiometrics;
     } catch (e) {
       debugPrint('Biometric availability error: $e');
       return false;
     }
   }
 
-  /// Check whether a fingerprint or other biometric is supported.
-  Future<bool> isFingerprintSupported() async {
+  Future<bool> isDeviceSupported() async {
     try {
-      final List<BiometricType> availableBiometrics = await _localAuth
-          .getAvailableBiometrics();
-      return availableBiometrics.any(_isSupportedBiometricType);
+      return await _localAuth.isDeviceSupported();
     } catch (e) {
-      debugPrint('Error checking fingerprint availability: $e');
+      debugPrint('Error checking device support: $e');
       return false;
     }
   }
 
-  /// Get available biometric types.
+  Future<bool> isBiometricAvailable() async {
+    final bool canCheck = await canCheckBiometrics();
+    final bool deviceSupported = await isDeviceSupported();
+    return canCheck || deviceSupported;
+  }
+
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
       return await _localAuth.getAvailableBiometrics();
@@ -46,7 +45,6 @@ class BiometricService {
     }
   }
 
-  /// Check whether any biometric identity is enrolled on the device.
   Future<bool> hasEnrolledFingerprint() async {
     try {
       final availableBiometrics = await getAvailableBiometrics();
@@ -57,9 +55,9 @@ class BiometricService {
     }
   }
 
-  /// Authenticate user with the available biometric mechanism.
-  Future<bool> authenticateWithFingerprint({
-    String reason = 'Please authenticate using your fingerprint',
+  Future<bool> authenticate({
+    String reason = 'Please authenticate to access your secure notes',
+    bool biometricOnly = false,
   }) async {
     try {
       if (!await isBiometricAvailable()) {
@@ -68,8 +66,8 @@ class BiometricService {
 
       final bool didAuthenticate = await _localAuth.authenticate(
         localizedReason: reason,
-        options: const AuthenticationOptions(
-          biometricOnly: true,
+        options: AuthenticationOptions(
+          biometricOnly: biometricOnly,
           stickyAuth: false,
           useErrorDialogs: true,
         ),
@@ -82,7 +80,18 @@ class BiometricService {
     }
   }
 
-  /// Get descriptions for the available biometric types.
+  Future<bool> authenticateWithAnyBiometric({
+    String reason = 'Please authenticate using your device biometric sensor',
+  }) async {
+    return await authenticate(reason: reason, biometricOnly: false);
+  }
+
+  Future<bool> authenticateWithFingerprint({
+    String reason = 'Please authenticate using your fingerprint',
+  }) async {
+    return await authenticate(reason: reason, biometricOnly: true);
+  }
+
   List<String> getBiometricTypeDescriptions(List<BiometricType> types) {
     return types.where(_isSupportedBiometricType).map((type) {
       switch (type) {
