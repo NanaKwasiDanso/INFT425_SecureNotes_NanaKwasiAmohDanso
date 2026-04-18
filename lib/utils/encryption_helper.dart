@@ -2,7 +2,7 @@ import 'package:encrypt/encrypt.dart';
 
 class EncryptionHelper {
   static final _key = Key.fromUtf8(
-    'my32lengthsupersecretkey1234567890',
+    'my32lengthsupersecretkey12345678',
   ); // In production, derive from user PIN
   static final _iv = IV.fromLength(16);
 
